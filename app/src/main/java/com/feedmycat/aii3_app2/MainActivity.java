@@ -3,7 +3,9 @@ package com.feedmycat.aii3_app2;
 import android.os.Bundle;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentActivity;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
@@ -19,7 +21,9 @@ import com.google.firebase.firestore.QuerySnapshot;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends FragmentActivity implements OnMapReadyCallback {
+public class MainActivity extends FragmentActivity implements OnMapReadyCallback,
+    OnMarkerClickListener {
+
   private GoogleMap map;
   private List<MarkerObj> mMarkerObjs = new ArrayList<>();
   private FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -40,6 +44,8 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
   @Override
   public void onMapReady(GoogleMap googleMap) {
     map = googleMap;
+
+    map.setOnMarkerClickListener(this);
   }
 
 
@@ -59,7 +65,8 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         }
         for (MarkerObj markerObj :
             mMarkerObjs) {
-          addMarker(markerObj.getTitle(), markerObj.getLatitude(), markerObj.getLongitude(), markerObj.getColor());
+          addMarker(markerObj.getTitle(), markerObj.getLatitude(), markerObj.getLongitude(),
+              markerObj.getColor());
         }
       }
     });
@@ -70,16 +77,40 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     Marker marker = map.addMarker(new MarkerOptions().position(latLng));
     marker.setTitle(title);
     switch (color) {
-      case "Red": marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+      case "Red":
+        marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
         break;
-      case "Blue": marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
+      case "Blue":
+        marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
         break;
-      case "Green": marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+      case "Green":
+        marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
         break;
-      case "Yellow": marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
+      case "Yellow":
+        marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
         break;
-      case "Orange": marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE));
+      case "Orange":
+        marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE));
         break;
     }
+  }
+
+  @Override
+  public boolean onMarkerClick(Marker marker) {
+    // Move the camera to the marker and show the title
+    map.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.getPosition(), 12));
+    marker.showInfoWindow();
+
+    // Show the bottom sheet
+    for (MarkerObj markerObj :
+        mMarkerObjs) {
+      if (marker.getTitle().equals(markerObj.getTitle())) {
+        BottomSheetDialog bottomSheetDialog = BottomSheetDialog
+            .newInstance(markerObj.getDescription(), markerObj.getBarometer());
+        bottomSheetDialog.show(getSupportFragmentManager(), "bottom sheet dialog");
+      }
+    }
+
+    return true;
   }
 }
